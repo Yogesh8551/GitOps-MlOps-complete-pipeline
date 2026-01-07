@@ -1,5 +1,8 @@
 name: VB to Java Auto Conversion
 
+permissions:
+  contents: write
+
 on:
   push:
     branches:
