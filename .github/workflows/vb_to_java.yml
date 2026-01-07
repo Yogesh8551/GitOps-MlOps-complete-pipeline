@@ -213,17 +213,19 @@ jobs:
     #     git commit -m "Auto-generated Java code from VB (CI)" || echo "No changes"
     #     git push origin java_generated_v2
 
-    - name: Commit Java code
+    - name: Commit Java code (SAFE CI MODE)
       run: |
+        git fetch origin java_generated_v2 || true
+
+        # 🔥 Reset branch to remote (no rebase, no conflicts)
+        git checkout java_generated_v2 || git checkout -b java_generated_v2
+        git reset --hard origin/java_generated_v2 || true
+
         rm -rf java_out
         mkdir java_out
         cp -r /tmp/java_out/* java_out/
 
         git add java_out
-
-        git commit -m "Auto-generated Java code from VB (CI)" || echo "No changes to commit"
-
-        # 🔥 CRITICAL FIX
-        git pull origin java_generated_v2 --rebase
+        git commit -m "Auto-generated Java code from VB (CI)" || echo "No changes"
 
         git push origin java_generated_v2
