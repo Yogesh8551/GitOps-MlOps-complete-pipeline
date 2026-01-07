@@ -1,26 +1,31 @@
 Module HelloWorld
     Sub Main()
         Console.WriteLine("Hello, World from VB!")
-        Console.WriteLine("Hello, My name is yogeshwar!")
-        Console.WriteLine("Hello, i am done successfully!")
-        Console.WriteLine("Hello, i am done successfully!")
-        Console.WriteLine("Hello, i am done successfully!")
-        onsole.WriteLine("Hello, World from VB!")
-        Console.WriteLine("Hello, My name is yogeshwar!")
-        Console.WriteLine("Hello, i am done successfully!")
-        Console.WriteLine("Hello, i am done successfully!")
-        Console.WriteLine("Hello, i am done successfully!")
+        Console.WriteLine("Hello, My name is Yogeshwar!")
+        Console.WriteLine("Hello, I am done successfully!")
+        Console.WriteLine("Hello, I am done successfully!")
+        Console.WriteLine("Hello, I am done successfully!")
+        Console.WriteLine("Hello, World from VB!")
+        Console.WriteLine("Hello, My name is Yogeshwar!")
+        Console.WriteLine("Hello, I am done successfully!")
+        Console.WriteLine("Hello, I am done successfully!")
+        Console.WriteLine("Hello, I am done successfully!")
 
-        Module Calculator
-    Sub Main()
+        ' Call calculator
+        Calculator.RunCalculator()
+    End Sub
+End Module
+
+Module Calculator
+    Public Sub RunCalculator()
         Dim a, b As Double
         Dim op As String
 
         Console.WriteLine("Enter first number:")
-        a = Console.ReadLine()
+        a = Double.Parse(Console.ReadLine())
 
         Console.WriteLine("Enter second number:")
-        b = Console.ReadLine()
+        b = Double.Parse(Console.ReadLine())
 
         Console.WriteLine("Enter operator (+, -, *, /):")
         op = Console.ReadLine()
@@ -36,10 +41,5 @@ Module HelloWorld
         Else
             Console.WriteLine("Invalid operator!")
         End If
-    End Sub
-End Module
-
-        
-
     End Sub
 End Module
