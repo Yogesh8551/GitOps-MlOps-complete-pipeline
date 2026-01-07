@@ -1,0 +1,119 @@
+name: Compile Java and Push to QA Branch
+
+on:
+  push:
+    branches:
+    - java_generated_v2
+
+permissions:
+  contents: write
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    environment: qa
+
+    steps:
+    # --------------------------------------------------
+    # Checkout generated Java branch
+    # --------------------------------------------------
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        persist-credentials: true
+
+    # --------------------------------------------------
+    # Setup Java
+    # --------------------------------------------------
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 17
+
+    # --------------------------------------------------
+    # Compile Java (logs always captured)
+    # --------------------------------------------------
+    - name: Compile Java files
+      id: compile
+      continue-on-error: true
+      run: |
+        mkdir -p out
+        echo "🔍 Finding Java files..."
+
+        find . -name "*.java" > sources.txt
+
+        if [ ! -s sources.txt ]; then
+          echo "❌ No Java files found" > compile-error.log
+          exit 1
+        fi
+
+        echo "⚙️ Compiling Java..."
+        javac -d out @sources.txt 2> compile-error.log
+
+    # --------------------------------------------------
+    # Push to QA branch ONLY if compilation succeeded
+    # --------------------------------------------------
+    - name: Push compiled output to QA branch
+      if: steps.compile.outcome == 'success'
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+
+        # Save compiled output
+        mkdir -p /tmp/build/src /tmp/build/bin
+        find . -name "*.java" -exec cp --parents {} /tmp/build/src/ \;
+        find out -name "*.class" -exec cp --parents {} /tmp/build/bin/ \;
+
+        # Clean workspace
+        rm -rf out sources.txt compile-error.log
+        git reset --hard
+        git clean -fd
+
+        # Checkout QA branch
+        git fetch origin qa_validation_v2 || true
+        git checkout qa_validation_v2 || git checkout -b qa_validation_v2
+
+        # Restore files
+        cp -r /tmp/build/src/* .
+        cp -r /tmp/build/bin/* .
+
+        git add -A
+        git commit -m "QA validation: compiled Java artifacts" || echo "Nothing to commit"
+        git push origin qa_validation_v2
+
+    # --------------------------------------------------
+    # Email developer if compilation FAILED
+    # --------------------------------------------------
+    - name: Send compilation failure email
+      if: steps.compile.outcome == 'failure'
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        secure: false
+        username: ${{ secrets.SMTP_USERNAME }}
+        password: ${{ secrets.SMTP_PASSWORD }}
+        to: ${{ secrets.ALERT_EMAIL }}
+        from: "GitHub Actions <${{ secrets.SMTP_USERNAME }}>"
+        subject: "❌ Java Compilation Failed – QA Validation"
+        body: |
+          Hello Developer,
+
+          ❌ Java compilation FAILED.
+
+          Repository: ${{ github.repository }}
+          Branch: java_generated_v2
+          Commit: ${{ github.sha }}
+
+          🔎 Compilation Error Log:
+          ----------------------------------
+          $(cat compile-error.log)
+          ----------------------------------
+
+          👉 Please fix the issue and push again to java_generated_v2.
+
+          – GitHub Actions CI
