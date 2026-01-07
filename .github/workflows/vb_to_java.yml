@@ -258,18 +258,39 @@ jobs:
       run: |
         pip install --upgrade pip
 
-    # ----------------------------------------
-    # STEP 1: Compile VB Code (LOGGING ENABLED)
-    # ----------------------------------------
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
     - name: Compile VB code
       id: vb_compile
       continue-on-error: true
       run: |
         mkdir -p logs
         echo "Starting VB compilation..." > logs/vb_compile.log
+        # Create temp VB project
+        dotnet new console -lang VB -o vb_build >> logs/vb_compile.log 2>&1
 
-        # Example VB compilation (update compiler as needed)
-        vbc vb_src/*.vb >> logs/vb_compile.log 2>&1
+        # Copy your VB files
+        cp vb_src/*.vb vb_build/
+
+
+        cd vb_build
+        dotnet build >> ../logs/vb_compile.log 2>&1
+
+    # # ----------------------------------------
+    # # STEP 1: Compile VB Code (LOGGING ENABLED)
+    # # ----------------------------------------
+    # - name: Compile VB code
+    #   id: vb_compile
+    #   continue-on-error: true
+    #   run: |
+    #     mkdir -p logs
+    #     echo "Starting VB compilation..." > logs/vb_compile.log
+
+    #     # Example VB compilation (update compiler as needed)
+    #     vbc vb_src/*.vb >> logs/vb_compile.log 2>&1
 
     # ----------------------------------------
     # STEP 2: Upload Logs ALWAYS
