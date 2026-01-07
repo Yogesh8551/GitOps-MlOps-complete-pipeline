@@ -255,7 +255,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements.txt
+        pip install --upgrade pip
 
     # ----------------------------------------
     # STEP 1: Compile VB Code (LOGGING ENABLED)
