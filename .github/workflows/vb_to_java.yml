@@ -1,3 +1,71 @@
+# name: VB to Java Auto Conversion
+
+# permissions:
+#   contents: write
+
+# on:
+#   push:
+#     branches:
+#     - vb_banking_v2
+
+# jobs:
+#   vb-to-java:
+#     runs-on: ubuntu-latest
+#     environment: Ai
+
+#     steps:
+#     - name: Checkout VB source branch
+#       uses: actions/checkout@v4
+#       with:
+#         ref: vb_banking_v2
+#         fetch-depth: 0
+
+#     - name: Set up Python
+#       uses: actions/setup-python@v5
+#       with:
+#         python-version: '3.11'
+
+#     - name: Install dependencies
+#       run: |
+#         pip install --upgrade pip
+#         pip install openai
+
+#     - name: Run VB to Java conversion
+#       env:
+#         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+#       run: |
+#         python scripts/vb_to_java_ai.py
+
+#     # ✅ SAVE GENERATED FILES SAFELY
+#     - name: Save generated Java files
+#       run: |
+#         mkdir -p /tmp/java_out
+#         cp -r java_out/* /tmp/java_out/
+
+#     # ✅ SWITCH BRANCH AFTER GENERATION
+#     - name: Switch to java_generated_v2 branch
+#       run: |
+#         git config user.name "github-actions"
+#         git config user.email "github-actions@github.com"
+
+#         git fetch origin java_generated_v2 || true
+#         git checkout java_generated_v2 || git checkout -b java_generated_v2
+
+#     # ✅ RESTORE FILES
+#     - name: Restore generated Java files
+#       run: |
+#         rm -rf java_out
+#         mkdir java_out
+#         cp -r /tmp/java_out/* java_out/
+
+#     - name: Commit and push Java code
+#       run: |
+#         git add java_out
+#         git commit -m "Auto-generated Java code from VB (CI)" || echo "No changes to commit"
+#         git push origin java_generated_v2
+
+# this is only showing error while the pushing on other branch 
+
 name: VB to Java Auto Conversion
 
 permissions:
@@ -19,6 +87,7 @@ jobs:
       with:
         ref: vb_banking_v2
         fetch-depth: 0
+        persist-credentials: true
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -36,13 +105,11 @@ jobs:
       run: |
         python scripts/vb_to_java_ai.py
 
-    # ✅ SAVE GENERATED FILES SAFELY
     - name: Save generated Java files
       run: |
         mkdir -p /tmp/java_out
         cp -r java_out/* /tmp/java_out/
 
-    # ✅ SWITCH BRANCH AFTER GENERATION
     - name: Switch to java_generated_v2 branch
       run: |
         git config user.name "github-actions"
@@ -51,12 +118,15 @@ jobs:
         git fetch origin java_generated_v2 || true
         git checkout java_generated_v2 || git checkout -b java_generated_v2
 
-    # ✅ RESTORE FILES
     - name: Restore generated Java files
       run: |
         rm -rf java_out
         mkdir java_out
         cp -r /tmp/java_out/* java_out/
+
+    - name: Set authenticated remote
+      run: |
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
     - name: Commit and push Java code
       run: |
