@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install openai==0.28.0
+        pip install openai
 
     - name: Run VB to Java conversion
       env:
