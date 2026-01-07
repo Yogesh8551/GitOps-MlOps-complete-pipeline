@@ -398,6 +398,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         pip install --upgrade pip
+        pip install openai
 
     # ----------------------------------------
     # Setup .NET SDK (for VB compilation)
