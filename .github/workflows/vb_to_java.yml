@@ -233,6 +233,138 @@
 
 #         git push origin java_generated_v2
 
+# #not contain vb compiler 
+
+# name: VB to Java Conversion Pipeline
+
+# on:
+#   push:
+#     branches:
+#     - vb_banking_v2
+
+# jobs:
+#   vb-to-java:
+#     runs-on: ubuntu-latest
+#     environment: email
+
+#     steps:
+#     - name: Checkout VB source
+#       uses: actions/checkout@v4
+
+#     - name: Set up Python
+#       uses: actions/setup-python@v5
+#       with:
+#         python-version: '3.10'
+
+#     - name: Install dependencies
+#       run: |
+#         pip install --upgrade pip
+
+#     - name: Setup .NET SDK
+#       uses: actions/setup-dotnet@v4
+#       with:
+#         dotnet-version: '8.0.x'
+
+#     - name: Compile VB code
+#       id: vb_compile
+#       continue-on-error: true
+#       run: |
+#         mkdir -p logs
+#         echo "Starting VB compilation..." > logs/vb_compile.log
+#         # Create temp VB project
+#         dotnet new console -lang VB -o vb_build >> logs/vb_compile.log 2>&1
+
+#         # Copy your VB files
+#         cp vb_src/*.vb vb_build/
+
+#         cd vb_build
+#         dotnet build >> ../logs/vb_compile.log 2>&1
+
+#     # # ----------------------------------------
+#     # # STEP 1: Compile VB Code (LOGGING ENABLED)
+#     # # ----------------------------------------
+#     # - name: Compile VB code
+#     #   id: vb_compile
+#     #   continue-on-error: true
+#     #   run: |
+#     #     mkdir -p logs
+#     #     echo "Starting VB compilation..." > logs/vb_compile.log
+
+#     #     # Example VB compilation (update compiler as needed)
+#     #     vbc vb_src/*.vb >> logs/vb_compile.log 2>&1
+
+#     # ----------------------------------------
+#     # STEP 2: Upload Logs ALWAYS
+#     # ----------------------------------------
+#     - name: Upload VB compile logs
+#       if: always()
+#       uses: actions/upload-artifact@v4
+#       with:
+#         name: vb-compile-logs
+#         path: logs/vb_compile.log
+
+#     # ----------------------------------------
+#     # STEP 3: Send Email if VB Compile Fails
+#     # ----------------------------------------
+#     - name: Email developer on VB compile failure
+#       if: steps.vb_compile.outcome == 'failure'
+#       uses: dawidd6/action-send-mail@v3
+#       with:
+#         server_address: smtp.gmail.com
+#         server_port: 587
+#         username: ${{ secrets.SMTP_USERNAME }}
+#         password: ${{ secrets.SMTP_PASSWORD }}
+#         subject: "❌ VB Compilation Failed – Pipeline Stopped"
+#         to: ${{ secrets.DEV_EMAIL }}
+#         from: "VB-Java Pipeline <${{ secrets.SMTP_USERNAME }}>"
+#         body: |
+#           VB compilation failed.
+
+#           Please check the attached log file to see
+#           the exact compilation error.
+
+#           Conversion pipeline was NOT executed.
+#         attachments: logs/vb_compile.log
+
+#     # ----------------------------------------
+#     # STEP 4: STOP PIPELINE IF VB FAILS
+#     # ----------------------------------------
+#     - name: Fail pipeline after saving logs
+#       if: steps.vb_compile.outcome == 'failure'
+#       run: |
+#         echo "VB compilation failed. Stopping pipeline."
+#         exit 1
+
+#     # ----------------------------------------
+#     # STEP 5: Run VB → Java Conversion
+#     # (ONLY IF VB COMPILE SUCCESS)
+#     # ----------------------------------------
+#     - name: Run VB to Java conversion
+#       run: |
+#         python scripts/vb_to_java_ai.py
+
+#     # ----------------------------------------
+#     # STEP 6: Switch to java_generated_v2
+#     # ----------------------------------------
+#     - name: Switch branch
+#       run: |
+#         git fetch origin
+#         git checkout java_generated_v2 || git checkout -b java_generated_v2
+
+#     # ----------------------------------------
+#     # STEP 7: Save ALL Java Files (.java + .class)
+#     # ----------------------------------------
+#     - name: Commit Java output
+#       run: |
+#         git config user.name "github-actions"
+#         git config user.email "github-actions@github.com"
+
+#         git add java_out/**/*.java java_out/**/*.class
+#         git commit -m "Auto-generated Java code from VB"
+#         git push origin java_generated_v2
+
+# #
+
 name: VB to Java Conversion Pipeline
 
 on:
@@ -240,60 +372,66 @@ on:
     branches:
     - vb_banking_v2
 
+permissions:
+  contents: write
+
 jobs:
   vb-to-java:
     runs-on: ubuntu-latest
     environment: email
 
     steps:
+    # ----------------------------------------
+    # Checkout VB source
+    # ----------------------------------------
     - name: Checkout VB source
       uses: actions/checkout@v4
 
+    # ----------------------------------------
+    # Setup Python
+    # ----------------------------------------
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
-    - name: Install dependencies
+    - name: Install Python dependencies
       run: |
         pip install --upgrade pip
 
+    # ----------------------------------------
+    # Setup .NET SDK (for VB compilation)
+    # ----------------------------------------
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
+    # ----------------------------------------
+    # STEP 1: Compile VB (LOGGING ENABLED)
+    # ----------------------------------------
     - name: Compile VB code
       id: vb_compile
       continue-on-error: true
       run: |
         mkdir -p logs
         echo "Starting VB compilation..." > logs/vb_compile.log
+
         # Create temp VB project
         dotnet new console -lang VB -o vb_build >> logs/vb_compile.log 2>&1
+
+        # 🔥 REMOVE DEFAULT ENTRY POINT
+        rm vb_build/Program.vb
 
         # Copy your VB files
         cp vb_src/*.vb vb_build/
 
-
+        # Build
         cd vb_build
         dotnet build >> ../logs/vb_compile.log 2>&1
 
-    # # ----------------------------------------
-    # # STEP 1: Compile VB Code (LOGGING ENABLED)
-    # # ----------------------------------------
-    # - name: Compile VB code
-    #   id: vb_compile
-    #   continue-on-error: true
-    #   run: |
-    #     mkdir -p logs
-    #     echo "Starting VB compilation..." > logs/vb_compile.log
-
-    #     # Example VB compilation (update compiler as needed)
-    #     vbc vb_src/*.vb >> logs/vb_compile.log 2>&1
-
     # ----------------------------------------
-    # STEP 2: Upload Logs ALWAYS
+    # STEP 2: Upload logs ALWAYS
     # ----------------------------------------
     - name: Upload VB compile logs
       if: always()
@@ -303,7 +441,7 @@ jobs:
         path: logs/vb_compile.log
 
     # ----------------------------------------
-    # STEP 3: Send Email if VB Compile Fails
+    # STEP 3: Email developer if VB compile FAILS
     # ----------------------------------------
     - name: Email developer on VB compile failure
       if: steps.vb_compile.outcome == 'failure'
@@ -311,55 +449,49 @@ jobs:
       with:
         server_address: smtp.gmail.com
         server_port: 587
+        secure: false
         username: ${{ secrets.SMTP_USERNAME }}
         password: ${{ secrets.SMTP_PASSWORD }}
-        subject: "❌ VB Compilation Failed – Pipeline Stopped"
         to: ${{ secrets.DEV_EMAIL }}
         from: "VB-Java Pipeline <${{ secrets.SMTP_USERNAME }}>"
+        subject: "❌ VB Compilation Failed – Pipeline Stopped"
         body: |
-          VB compilation failed.
+          VB compilation FAILED.
 
-          Please check the attached log file to see
-          the exact compilation error.
+          Repository: ${{ github.repository }}
+          Branch: vb_banking_v2
+          Commit: ${{ github.sha }}
 
-          Conversion pipeline was NOT executed.
+          Please download the attached logs to see the exact error.
         attachments: logs/vb_compile.log
 
     # ----------------------------------------
-    # STEP 4: STOP PIPELINE IF VB FAILS
+    # STEP 4: Stop pipeline AFTER logs + email
     # ----------------------------------------
-    - name: Fail pipeline after saving logs
+    - name: Stop pipeline on VB failure
       if: steps.vb_compile.outcome == 'failure'
       run: |
-        echo "VB compilation failed. Stopping pipeline."
+        echo "VB compilation failed. Pipeline stopped."
         exit 1
 
     # ----------------------------------------
-    # STEP 5: Run VB → Java Conversion
-    # (ONLY IF VB COMPILE SUCCESS)
+    # STEP 5: Run VB → Java conversion (ONLY IF VB OK)
     # ----------------------------------------
     - name: Run VB to Java conversion
       run: |
         python scripts/vb_to_java_ai.py
 
     # ----------------------------------------
-    # STEP 6: Switch to java_generated_v2
+    # STEP 6: Push Java to java_generated_v2
     # ----------------------------------------
-    - name: Switch branch
-      run: |
-        git fetch origin
-        git checkout java_generated_v2 || git checkout -b java_generated_v2
-
-    # ----------------------------------------
-    # STEP 7: Save ALL Java Files (.java + .class)
-    # ----------------------------------------
-    - name: Commit Java output
+    - name: Push Java output
       run: |
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
 
-        git add java_out/**/*.java java_out/**/*.class
-        git commit -m "Auto-generated Java code from VB"
-        git push origin java_generated_v2
+        git fetch origin java_generated_v2 || true
+        git checkout java_generated_v2 || git checkout -b java_generated_v2
 
-#
+        git add java_out
+        git commit -m "Auto-generated Java code from VB (CI)" || echo "No changes"
+        git push origin java_generated_v2

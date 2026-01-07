@@ -21,6 +21,8 @@ Module Calculator
         Dim a, b As Double
         Dim op As String
 
+        
+
         Console.WriteLine("Enter first number:")
         a = Double.Parse(Console.ReadLine())
 
