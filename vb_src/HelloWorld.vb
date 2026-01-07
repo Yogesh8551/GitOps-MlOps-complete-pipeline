@@ -5,6 +5,36 @@ Module HelloWorld
         Console.WriteLine("Hello, i am done successfully!")
         Console.WriteLine("Hello, i am done successfully!")
         Console.WriteLine("Hello, i am done successfully!")
+
+        Module Calculator
+    Sub Main()
+        Dim a, b As Double
+        Dim op As String
+
+        Console.WriteLine("Enter first number:")
+        a = Console.ReadLine()
+
+        Console.WriteLine("Enter second number:")
+        b = Console.ReadLine()
+
+        Console.WriteLine("Enter operator (+, -, *, /):")
+        op = Console.ReadLine()
+
+        If op = "+" Then
+            Console.WriteLine("Result: " & (a + b))
+        ElseIf op = "-" Then
+            Console.WriteLine("Result: " & (a - b))
+        ElseIf op = "*" Then
+            Console.WriteLine("Result: " & (a * b))
+        ElseIf op = "/" Then
+            Console.WriteLine("Result: " & (a / b))
+        Else
+            Console.WriteLine("Invalid operator!")
+        End If
+    End Sub
+End Module
+
         
+
     End Sub
 End Module
