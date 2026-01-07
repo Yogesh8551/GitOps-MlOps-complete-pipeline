@@ -134,98 +134,208 @@
 #         git commit -m "Auto-generated Java code from VB (CI)" || echo "No changes to commit"
 #         git push origin java_generated_v2
 
-name: VB to Java Auto Conversion
+#from here we can copy that code it is use full 
+
+# name: VB to Java Auto Conversion
+
+# on:
+#   push:
+#     branches:
+#     - vb_banking_v2
+
+# permissions:
+#   contents: write
+
+# jobs:
+#   vb-to-java:
+#     runs-on: ubuntu-latest
+#     environment: Ai
+
+#     steps:
+#     # -------------------------------
+#     # Checkout VB branch
+#     # -------------------------------
+#     - name: Checkout VB source
+#       uses: actions/checkout@v4
+#       with:
+#         ref: vb_banking_v2
+#         fetch-depth: 0
+
+#     # -------------------------------
+#     # Setup Python
+#     # -------------------------------
+#     - name: Set up Python
+#       uses: actions/setup-python@v5
+#       with:
+#         python-version: "3.11"
+
+#     - name: Install dependencies
+#       run: |
+#         pip install --upgrade pip
+
+#         pip install openai
+
+#     # -------------------------------
+#     # Convert VB → Java
+#     # -------------------------------
+#     - name: Run VB to Java conversion
+#       env:
+#         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+#       run: |
+#         python scripts/vb_to_java_ai.py
+
+#     # -------------------------------
+#     # Save generated Java
+#     # -------------------------------
+#     - name: Save Java output
+#       run: |
+#         mkdir -p /tmp/java_out
+#         cp -r java_out/* /tmp/java_out/
+
+#     # -------------------------------
+#     # Switch to java_generated_v2
+#     # -------------------------------
+#     - name: Switch branch
+#       run: |
+#         git config user.name "github-actions"
+#         git config user.email "github-actions@github.com"
+
+#         git fetch origin java_generated_v2 || true
+#         git checkout java_generated_v2 || git checkout -b java_generated_v2
+
+#     # -------------------------------
+#     # Restore + push Java
+#     # -------------------------------
+#     # - name: Commit Java code
+#     #   run: |
+#     #     rm -rf java_out
+#     #     mkdir java_out
+#     #     cp -r /tmp/java_out/* java_out/
+
+#     #     git add java_out
+#     #     git commit -m "Auto-generated Java code from VB (CI)" || echo "No changes"
+#     #     git push origin java_generated_v2
+
+#     - name: Commit Java code (SAFE CI MODE)
+#       run: |
+#         git fetch origin java_generated_v2 || true
+
+#         # 🔥 Reset branch to remote (no rebase, no conflicts)
+#         git checkout java_generated_v2 || git checkout -b java_generated_v2
+#         git reset --hard origin/java_generated_v2 || true
+
+#         rm -rf java_out
+#         mkdir java_out
+#         cp -r /tmp/java_out/* java_out/
+
+#         git add java_out
+#         git commit -m "Auto-generated Java code from VB (CI)" || echo "No changes"
+
+#         git push origin java_generated_v2
+
+name: VB to Java Conversion Pipeline
 
 on:
   push:
     branches:
-    - vb_banking_v2
-
-permissions:
-  contents: write
+    - vb_banking_v1
 
 jobs:
   vb-to-java:
     runs-on: ubuntu-latest
-    environment: Ai
 
     steps:
-    # -------------------------------
-    # Checkout VB branch
-    # -------------------------------
     - name: Checkout VB source
       uses: actions/checkout@v4
-      with:
-        ref: vb_banking_v2
-        fetch-depth: 0
 
-    # -------------------------------
-    # Setup Python
-    # -------------------------------
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.11"
+        python-version: '3.10'
 
     - name: Install dependencies
       run: |
-        pip install --upgrade pip
-        pip install openai
+        pip install -r requirements.txt
 
-    # -------------------------------
-    # Convert VB → Java
-    # -------------------------------
+    # ----------------------------------------
+    # STEP 1: Compile VB Code (LOGGING ENABLED)
+    # ----------------------------------------
+    - name: Compile VB code
+      id: vb_compile
+      continue-on-error: true
+      run: |
+        mkdir -p logs
+        echo "Starting VB compilation..." > logs/vb_compile.log
+
+        # Example VB compilation (update compiler as needed)
+        vbc vb_src/*.vb >> logs/vb_compile.log 2>&1
+
+    # ----------------------------------------
+    # STEP 2: Upload Logs ALWAYS
+    # ----------------------------------------
+    - name: Upload VB compile logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: vb-compile-logs
+        path: logs/vb_compile.log
+
+    # ----------------------------------------
+    # STEP 3: Send Email if VB Compile Fails
+    # ----------------------------------------
+    - name: Email developer on VB compile failure
+      if: steps.vb_compile.outcome == 'failure'
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.SMTP_USERNAME }}
+        password: ${{ secrets.SMTP_PASSWORD }}
+        subject: "❌ VB Compilation Failed – Pipeline Stopped"
+        to: ${{ secrets.DEV_EMAIL }}
+        from: "VB-Java Pipeline <${{ secrets.SMTP_USERNAME }}>"
+        body: |
+          VB compilation failed.
+
+          Please check the attached log file to see
+          the exact compilation error.
+
+          Conversion pipeline was NOT executed.
+        attachments: logs/vb_compile.log
+
+    # ----------------------------------------
+    # STEP 4: STOP PIPELINE IF VB FAILS
+    # ----------------------------------------
+    - name: Fail pipeline after saving logs
+      if: steps.vb_compile.outcome == 'failure'
+      run: |
+        echo "VB compilation failed. Stopping pipeline."
+        exit 1
+
+    # ----------------------------------------
+    # STEP 5: Run VB → Java Conversion
+    # (ONLY IF VB COMPILE SUCCESS)
+    # ----------------------------------------
     - name: Run VB to Java conversion
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
         python scripts/vb_to_java_ai.py
 
-    # -------------------------------
-    # Save generated Java
-    # -------------------------------
-    - name: Save Java output
-      run: |
-        mkdir -p /tmp/java_out
-        cp -r java_out/* /tmp/java_out/
-
-    # -------------------------------
-    # Switch to java_generated_v2
-    # -------------------------------
+    # ----------------------------------------
+    # STEP 6: Switch to java_generated_v2
+    # ----------------------------------------
     - name: Switch branch
+      run: |
+        git fetch origin
+        git checkout java_generated_v2 || git checkout -b java_generated_v2
+
+    # ----------------------------------------
+    # STEP 7: Save ALL Java Files (.java + .class)
+    # ----------------------------------------
+    - name: Commit Java output
       run: |
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
 
-        git fetch origin java_generated_v2 || true
-        git checkout java_generated_v2 || git checkout -b java_generated_v2
-
-    # -------------------------------
-    # Restore + push Java
-    # -------------------------------
-    # - name: Commit Java code
-    #   run: |
-    #     rm -rf java_out
-    #     mkdir java_out
-    #     cp -r /tmp/java_out/* java_out/
-
-    #     git add java_out
-    #     git commit -m "Auto-generated Java code from VB (CI)" || echo "No changes"
-    #     git push origin java_generated_v2
-
-    - name: Commit Java code (SAFE CI MODE)
-      run: |
-        git fetch origin java_generated_v2 || true
-
-        # 🔥 Reset branch to remote (no rebase, no conflicts)
-        git checkout java_generated_v2 || git checkout -b java_generated_v2
-        git reset --hard origin/java_generated_v2 || true
-
-        rm -rf java_out
-        mkdir java_out
-        cp -r /tmp/java_out/* java_out/
-
-        git add java_out
-        git commit -m "Auto-generated Java code from VB (CI)" || echo "No changes"
-
+        git add java_out/**/*.java java_out/**/*.class
+        git commit -m "Auto-generated Java code from VB"
         git push origin java_generated_v2

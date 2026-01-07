@@ -27,7 +27,7 @@ Module HelloWorld
         ElseIf op = "*" Then
             Console.WriteLine("Result: " & (a * b))
         ElseIf op = "/" Then
-            Console.WriteLine("Result: " & (a / b))
+            Console.WriteLine("Result: " & (a / b) #bracket is not their)
         Else
             Console.WriteLine("Invalid operator!")
         End If
