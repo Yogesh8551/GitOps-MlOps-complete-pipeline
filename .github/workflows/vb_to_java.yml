@@ -8,6 +8,7 @@ on:
 jobs:
   vb-to-java:
     runs-on: ubuntu-latest
+    environment: Ai
 
     steps:
     - name: Checkout VB source branch
