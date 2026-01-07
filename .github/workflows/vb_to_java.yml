@@ -243,6 +243,7 @@ on:
 jobs:
   vb-to-java:
     runs-on: ubuntu-latest
+    environment: qa
 
     steps:
     - name: Checkout VB source
