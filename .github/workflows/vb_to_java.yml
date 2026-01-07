@@ -1,0 +1,52 @@
+name: VB to Java Auto Conversion
+
+on:
+  push:
+    branches:
+    - vb_banking_v2
+
+jobs:
+  vb-to-java:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout VB source branch
+      uses: actions/checkout@v4
+      with:
+        ref: vb_banking_v2
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install openai==0.28.0
+
+    - name: Run VB to Java conversion
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        python scripts/vb_to_java_ai.py
+
+    - name: Switch to java_generated_v2 branch
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+
+        git fetch origin java_generated_v2
+        git checkout java_generated_v2 || git checkout -b java_generated_v2
+
+    - name: Copy generated Java files
+      run: |
+        rm -rf java_out
+        cp -r java_out ./ || true
+
+    - name: Commit and push Java code
+      run: |
+        git add .
+        git commit -m "Auto-generated Java code from VB" || echo "No changes to commit"
+        git push origin java_generated_v2
