@@ -238,7 +238,7 @@ name: VB to Java Conversion Pipeline
 on:
   push:
     branches:
-    - vb_banking_v1
+    - vb_banking_v2
 
 jobs:
   vb-to-java:
