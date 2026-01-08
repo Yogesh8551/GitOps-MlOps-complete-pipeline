@@ -494,14 +494,40 @@ jobs:
     # ----------------------------------------
     # STEP 6: Push Java to java_generated_v2
     # ----------------------------------------
-    - name: Push Java output
+
+    - name: Push Java output (SAFE CI MODE)
       run: |
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
 
-        git fetch origin java_generated_v2 || true
-        git checkout java_generated_v2 || git checkout -b java_generated_v2
+          # Save generated files safely
+          mkdir -p /tmp/java_out
+          cp -r java_out/* /tmp/java_out/
 
-        git add java_out
-        git commit -m "Auto-generated Java code from VB (CI)" || echo "No changes"
-        git push origin java_generated_v2
+          # Switch branch cleanly
+         git fetch origin java_generated_v2 || true
+         git checkout java_generated_v2 || git checkout -b java_generated_v2
+
+         # 🔥 Force local branch to match remote
+         git reset --hard origin/java_generated_v2 || true
+
+         # Restore generated files
+          rm -rf java_out
+          mkdir java_out
+          cp -r /tmp/java_out/* java_out/
+
+          # Commit & push
+          git add java_out
+          git commit -m "Auto-generated Java code from VB (CI)" || echo "No changes"
+         git push origin java_generated_v2
+    # - name: Push Java output
+    #   run: |
+    #     git config user.name "github-actions"
+    #     git config user.email "github-actions@github.com"
+
+    #     git fetch origin java_generated_v2 || true
+    #     git checkout java_generated_v2 || git checkout -b java_generated_v2
+
+    #     git add java_out
+    #     git commit -m "Auto-generated Java code from VB (CI)" || echo "No changes"
+    #     git push origin java_generated_v2
