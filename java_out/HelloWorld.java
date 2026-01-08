@@ -11,6 +11,12 @@ public class HelloWorld {
         System.out.println("Hello, I am done successfully!");
         System.out.println("Hello, I am done successfully!");
         System.out.println("Hello, I am done successfully!");
+        System.out.println("Hello, I am done successfully!");
+        System.out.println("Hello, World from VB!");
+        System.out.println("Hello, My name is Yogeshwar!");
+        System.out.println("Hello, I am done successfully!");
+        System.out.println("Hello, I am done successfully!");
+        System.out.println("Hello, I am done successfully!");
 
         // Call calculator
         Calculator.runCalculator();
