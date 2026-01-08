@@ -475,10 +475,19 @@ jobs:
         echo "VB compilation failed. Pipeline stopped."
         exit 1
 
+    # # ----------------------------------------
+    # # STEP 5: Run VB → Java conversion (ONLY IF VB OK)
+    # # ----------------------------------------
+    # - name: Run VB to Java conversion
+    #   run: |
+    #     python scripts/vb_to_java_ai.py
+
     # ----------------------------------------
     # STEP 5: Run VB → Java conversion (ONLY IF VB OK)
     # ----------------------------------------
     - name: Run VB to Java conversion
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
         python scripts/vb_to_java_ai.py
 
