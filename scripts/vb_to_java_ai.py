@@ -52,14 +52,89 @@
 
 # print("=== SCRIPT FINISHED ===")
 
+
+
+
+
+
+#working script with openai
+
+
+# import os
+# from pathlib import Path
+# import openai
+
+# print("=== SCRIPT STARTED ===")
+
+# # Use your OpenAI API key from environment
+# openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# SRC_DIR = Path("vb_src")
+# OUT_DIR = Path("java_out")
+# OUT_DIR.mkdir(exist_ok=True)
+
+# print("VB source dir exists:", SRC_DIR.exists())
+# vb_files = list(SRC_DIR.glob("*.vb"))
+# print("VB files found:", vb_files)
+
+
+
+# def convert_vb_to_java(vb_code: str) -> str:
+#     """
+#     Sends the VB.NET code to OpenAI GPT model to convert it into Java.
+#     Uses the new OpenAI SDK v1+ interface.
+#     """
+#     prompt = f"""
+# Convert the following VB.NET code line by line into Java.
+# Rules:
+# - Use standard Java syntax
+# - Preserve logic
+# - Return ONLY Java code, no explanations
+
+# VB.NET code:
+# {vb_code}
+# """
+
+#     # NEW SDK syntax
+#     response = openai.chat.completions.create(
+#         model="gpt-4o-mini",  # free/low-cost GPT model
+#         messages=[{"role": "user", "content": prompt}],
+#         temperature=0
+#     )
+
+#     java_code = response.choices[0].message.content.strip()
+#     return java_code
+
+
+
+# # Process all VB files
+# for vb_file in vb_files:
+#     print(f"Processing file: {vb_file}")
+
+#     vb_code = vb_file.read_text(encoding="utf-8")
+#     java_code = convert_vb_to_java(vb_code)
+
+#     java_file = OUT_DIR / (vb_file.stem + ".java")
+#     java_file.write_text(java_code, encoding="utf-8")
+
+#     print(f"Generated: {java_file}")
+
+# print("=== SCRIPT FINISHED ===")
+
+
+
+
+
+
+
+  
 import os
 from pathlib import Path
-import openai
+from openai import OpenAI
 
 print("=== SCRIPT STARTED ===")
 
-# Use your OpenAI API key from environment
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 SRC_DIR = Path("vb_src")
 OUT_DIR = Path("java_out")
@@ -70,12 +145,7 @@ vb_files = list(SRC_DIR.glob("*.vb"))
 print("VB files found:", vb_files)
 
 
-
 def convert_vb_to_java(vb_code: str) -> str:
-    """
-    Sends the VB.NET code to OpenAI GPT model to convert it into Java.
-    Uses the new OpenAI SDK v1+ interface.
-    """
     prompt = f"""
 Convert the following VB.NET code line by line into Java.
 Rules:
@@ -86,20 +156,15 @@ Rules:
 VB.NET code:
 {vb_code}
 """
-
-    # NEW SDK syntax
-    response = openai.chat.completions.create(
-        model="gpt-4o-mini",  # free/low-cost GPT model
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}],
-        temperature=0
+        temperature=0,
     )
 
-    java_code = response.choices[0].message.content.strip()
-    return java_code
+    return response.choices[0].message.content.strip()
 
 
-
-# Process all VB files
 for vb_file in vb_files:
     print(f"Processing file: {vb_file}")
 
@@ -112,3 +177,4 @@ for vb_file in vb_files:
     print(f"Generated: {java_file}")
 
 print("=== SCRIPT FINISHED ===")
+
