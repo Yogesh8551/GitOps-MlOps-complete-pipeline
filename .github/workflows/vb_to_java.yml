@@ -378,7 +378,7 @@ permissions:
 jobs:
   vb-to-java:
     runs-on: ubuntu-latest
-    environment: email
+    environment: email, Ai
 
     steps:
     # ----------------------------------------
